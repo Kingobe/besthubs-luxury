@@ -1,0 +1,10 @@
+{
+    "Messages": [
+        {
+            "MessageId": "c24fb08f-e24c-447d-b5b0-2c7b9866f4f1",
+            "ReceiptHandle": "AQEBmhTSc6PedT3uwoclJjDs9TYEaLVwbjrbcn/3IpQ8+5OqsWqkruUJIIm/DRoeEZ7s2P7Nx/4yJarE4A0G+mzZ7BBcE+oe+dszRa5+dW/SDCNXiqebOzsKZgEMLIPQh7VXWqeVjjbSG7F5HrebtWrKhUO9yTGFd8y8sTHaXRQuxL9Fh0F5XLCjUTLqUQfOL5utSHB5Uas4CA69OzHxCBCUDL0Cy8SV5MVqxRcAdyGkr1NHIzVU6CxCHhPR//VqqzDGtAIdmWpefxJY3VhV5ve8AqferC4yRaamme47RtppfTNW4EqdXC3llYFb3MlFhww+D5hE7oB0puFOb4Fc5fR5ZcS17IEZt1VvFcXDAjZudG8h27T571kiIHnMHwLFerueUdg6ZOvyau56nM7BLnqYNUa9jYEXidrtdFYECnpmYWo=",
+            "MD5OfBody": "7ce7c8a8a32309eda2ad05c0cabfed64",
+            "Body": "{\"to\":\"digisphere.obe@gmail.com\",\"subject\":\"Rental Reminder\",\"body\":\"Your shisha bowl rental ends on 2025-04-17. Please return it on time.\"}"
+        }
+    ]
+}

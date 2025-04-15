@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import Link from "next/link";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -63,12 +62,6 @@ export default function Signup() {
         {error && <p style={{ color: "red" }}>{error}</p>}
         <button type="submit">Sign Up</button>
       </form>
-      <p>
-        <Link href="/">Go to Home</Link>
-      </p>
-      <p>
-        <Link href="/auth/signin/">Already have an account? Sign In</Link>
-      </p>
     </div>
   );
 }

@@ -16,7 +16,6 @@ export default NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Fetch user from DynamoDB
         const { Item } = await dynamoDB.send(
           new GetCommand({
             TableName: "Users",
@@ -28,13 +27,11 @@ export default NextAuth({
           throw new Error("No user found with this email");
         }
 
-        // Compare passwords
         const isValid = await bcrypt.compare(credentials.password, Item.password);
         if (!isValid) {
           throw new Error("Invalid password");
         }
 
-        // Return user object
         return { email: Item.email, isAdmin: Item.isAdmin };
       },
     }),
