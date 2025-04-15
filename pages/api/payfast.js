@@ -1,13 +1,16 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import crypto from "crypto";
-
-const client = new DynamoDBClient({ region: "us-west-2" });
-const docClient = DynamoDBDocumentClient.from(client);
+import { getSession } from "next-auth/react";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const session = await getSession({ req });
+  if (!session) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   const { amount, item_name, user_email, rental_days } = req.body;
