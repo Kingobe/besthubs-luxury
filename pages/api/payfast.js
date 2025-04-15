@@ -1,14 +1,15 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import crypto from "crypto";
-import { auth } from "./auth/[...nextauth]";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./auth/[...nextauth]";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const session = await auth(req, res);
+  const session = await getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -56,6 +57,19 @@ export default async function handler(req, res) {
         endDate: endDate.toISOString().split("T")[0],
       },
     }));
+
+    // Send SQS message for email notification
+    const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
+    const sqs = new SQSClient({ region: "us-west-2" });
+    await sqs.send(new SendMessageCommand({
+      QueueUrl: "https://sqs.us-west-2.amazonaws.com/165637392708/BestHubsNotifications",
+      MessageBody: JSON.stringify({
+        to: user_email,
+        subject: "Order Confirmation",
+        body: `Your order for ${item_name} has been placed. Rental ends on ${endDate.toISOString().split("T")[0]}.`,
+      }),
+    }));
+
     res.status(200).json(data);
   } catch (error) {
     console.error("Error:", error);
