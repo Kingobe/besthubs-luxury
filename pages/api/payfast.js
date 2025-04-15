@@ -1,14 +1,15 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import crypto from "crypto";
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./auth/[...nextauth]";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const session = await getSession({ req });
+  const session = await getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -41,6 +42,8 @@ export default async function handler(req, res) {
   data.signature = crypto.createHash("md5").update(signature).digest("hex");
 
   try {
+    const client = new DynamoDBClient({ region: "us-west-2" });
+    const docClient = DynamoDBDocumentClient.from(client);
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + parseInt(rental_days));
     await docClient.send(new PutCommand({
