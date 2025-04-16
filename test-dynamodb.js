@@ -1,21 +1,18 @@
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, ScanCommand } = require("@aws-sdk/lib-dynamodb");
-const { fromIni } = require("@aws-sdk/credential-providers");
-
+const { DynamoDBClient, ScanCommand } = require("@aws-sdk/client-dynamodb");
 const client = new DynamoDBClient({
   region: "us-west-2",
-  credentials: fromIni({ profile: "default" }),
+  credentials: {
+    accessKeyId: "AKIASNEGCBFCFD77MPGP",
+    secretAccessKey: "vyo/G0wRaUb8VZCtbQ8qt9MmBveCl942m1sobGQ"
+  }
 });
-const docClient = DynamoDBDocumentClient.from(client);
-
-async function testScan() {
+async function scanUsers() {
   try {
-    const scanCommand = new ScanCommand({ TableName: "Products" });
-    const { Items: products } = await docClient.send(scanCommand);
-    console.log("Products:", products);
+    const command = new ScanCommand({ TableName: "Users" });
+    const response = await client.send(command);
+    console.log(JSON.stringify(response.Items, null, 2));
   } catch (error) {
-    console.error("Test error:", error);
+    console.error("Error:", error);
   }
 }
-
-testScan();
+scanUsers();
