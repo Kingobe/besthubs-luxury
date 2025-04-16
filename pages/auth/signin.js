@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function SignIn() {
     });
 
     if (result.error) {
-      setError(result.error);
+      setError("Invalid email or password");
     } else {
       router.push("/checkout");
     }
@@ -50,6 +51,9 @@ export default function SignIn() {
           Sign In
         </button>
       </form>
+      <p className="mt-4">
+        Need an account? <Link href="/auth/signup" className="underline">Sign Up</Link>
+      </p>
     </div>
   );
 }
