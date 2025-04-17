@@ -1,72 +1,59 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
-import bcrypt from "bcryptjs";
+import NextAuth from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { MongoDBAdapter } from '@auth/mongodb-adapter';
+import clientPromise from '../../../lib/mongodb';
+import bcrypt from 'bcryptjs';
 
-const dynamoClient = new DynamoDBClient({ region: "us-west-2" });
-const dynamoDB = DynamoDBDocumentClient.from(dynamoClient);
-
-export default NextAuth({
+export const authOptions = {
+  adapter: MongoDBAdapter(clientPromise),
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
-      authorize: async (credentials) => {
-        const { email, password } = credentials;
+      async authorize(credentials) {
+        const client = await clientPromise;
+        const db = client.db();
+        const user = await db.collection('users').findOne({ email: credentials.email });
 
-        console.log("Attempting to sign in with email:", email);
-
-        try {
-          const { Item: user } = await dynamoDB.send(
-            new GetCommand({
-              TableName: "Users",
-              Key: { email },
-            })
-          );
-
-          console.log("User retrieved from DynamoDB:", user);
-
-          if (!user) {
-            throw new Error("No user found with this email");
-          }
-
-          const isValid = await bcrypt.compare(password, user.password);
-
-          console.log("Password match:", isValid);
-
-          if (!isValid) {
-            throw new Error("Invalid password");
-          }
-
-          return { email: user.email, isAdmin: user.isAdmin };
-        } catch (error) {
-          console.error("Authentication error:", error.message || "Authentication failed");
-          throw new Error(error.message || "Authentication failed");
+        if (!user) {
+          throw new Error('User not found');
         }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) {
+          throw new Error('Invalid password');
+        }
+
+        return { id: user._id.toString(), name: user.email, email: user.email, isAdmin: user.isAdmin || false };
       },
     }),
   ],
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  jwt: {
+    secret: process.env.NEXTAUTH_SECRET,
+  },
   pages: {
-    signIn: "/auth/signin",
-    signOut: "/auth/signout",
+    signIn: '/auth/signin',
+    error: '/auth/error',
   },
   callbacks: {
+    async session({ session, token }) {
+      session.user.isAdmin = token.isAdmin;
+      return session;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.isAdmin = user.isAdmin;
       }
       return token;
     },
-    async session({ session, token }) {
-      session.user.isAdmin = token.isAdmin;
-      return session;
-    },
   },
-  session: {
-    strategy: "jwt",
-  },
-});
+};
+
+export default NextAuth(authOptions);

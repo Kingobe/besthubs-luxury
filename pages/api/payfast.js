@@ -1,78 +1,22 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-import crypto from "crypto";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "./auth/[...nextauth]";
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from './auth/[...nextauth]';
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
   const session = await getServerSession(req, res, authOptions);
   if (!session) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { amount, item_name, user_email, rental_days } = req.body;
-  const merchantId = "22934046";
-  const merchantKey = "djtg9inihumhl";
-  const returnUrl = "https://besthubs-luxury-33klnhypi-kingobes-projects.vercel.app/success";
-  const cancelUrl = "https://besthubs-luxury-33klnhypi-kingobes-projects.vercel.app/cancel";
-  const notifyUrl = "https://besthubs-luxury-33klnhypi-kingobes-projects.vercel.app/api/payfast-notify";
-
+  const { amount, item_name, days } = req.body;
   const data = {
-    merchant_id: merchantId,
-    merchant_key: merchantKey,
-    return_url: returnUrl,
-    cancel_url: cancelUrl,
-    notify_url: notifyUrl,
-    name_first: user_email.split("@")[0],
-    email_address: user_email,
-    m_payment_id: `order_${Date.now()}`,
-    amount: parseFloat(amount).toFixed(2),
+    merchant_id: process.env.PAYFAST_MERCHANT_ID,
+    merchant_key: process.env.PAYFAST_MERCHANT_KEY,
+    amount,
     item_name,
-    payment_method: "cc",
+    return_url: 'http://localhost:3005/success',
+    cancel_url: 'http://localhost:3005/cancel',
+    notify_url: 'http://localhost:3005/api/payfast/notify',
   };
-
-  const signature = Object.keys(data)
-    .sort()
-    .map((key) => `${key}=${encodeURIComponent(data[key]).replace(/%20/g, "+")}`)
-    .join("&");
-  data.signature = crypto.createHash("md5").update(signature).digest("hex");
-
-  try {
-    const client = new DynamoDBClient({ region: "us-west-2" });
-    const docClient = DynamoDBDocumentClient.from(client);
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + parseInt(rental_days));
-    await docClient.send(new PutCommand({
-      TableName: "Orders",
-      Item: {
-        id: data.m_payment_id,
-        email: user_email,
-        item: item_name,
-        total: parseFloat(amount),
-        status: "pending",
-        endDate: endDate.toISOString().split("T")[0],
-      },
-    }));
-
-    // Send SQS message for email notification
-    const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
-    const sqs = new SQSClient({ region: "us-west-2" });
-    await sqs.send(new SendMessageCommand({
-      QueueUrl: "https://sqs.us-west-2.amazonaws.com/165637392708/BestHubsNotifications",
-      MessageBody: JSON.stringify({
-        to: user_email,
-        subject: "Order Confirmation",
-        body: `Your order for ${item_name} has been placed. Rental ends on ${endDate.toISOString().split("T")[0]}.`,
-      }),
-    }));
-
-    res.status(200).json(data);
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: "Failed to create order" });
-  }
+  const url = `https://sandbox.payfast.co.za/eng/process?${new URLSearchParams(data).toString()}`;
+  return res.status(200).json({ redirectUrl: url });
 }

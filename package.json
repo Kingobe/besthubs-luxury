@@ -9,26 +9,30 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "3.645.0",
+    "@auth/mongodb-adapter": "^3.8.0",
+    "@aws-sdk/client-dynamodb": "^3.788.0",
     "@aws-sdk/client-ses": "3.645.0",
     "@aws-sdk/client-sqs": "3.645.0",
-    "@aws-sdk/lib-dynamodb": "3.645.0",
+    "@aws-sdk/lib-dynamodb": "^3.789.0",
+    "autoprefixer": "10.4.20",
+    "aws-sdk": "^2.1692.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.5.0",
     "exceljs": "4.4.0",
+    "mongodb": "^6.15.0",
     "next": "15.3.0",
-    "next-auth": "4.24.8",
+    "next-auth": "^5.0.0-beta.25",
+    "postcss": "8.4.47",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "tailwindcss": "3.4.13",
-    "postcss": "8.4.47",
-    "autoprefixer": "10.4.20",
-    "bcryptjs": "2.4.3"
+    "tailwindcss": "3.4.13"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
     "eslint": "^9.12.0",
     "eslint-config-next": "15.3.0",
-    "typescript": "5.6.2",
-    "@typescript-eslint/parser": "^8.7.0",
-    "@typescript-eslint/eslint-plugin": "^8.7.0"
+    "typescript": "5.6.2"
   },
   "packageManager": "npm@10.8.3"
 }

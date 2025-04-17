@@ -1,54 +1,59 @@
-import { useState } from "react";
-import { useRouter } from "next/router";
-import Link from "next/link";
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import clientPromise from '../../lib/mongodb';
+import bcrypt from 'bcryptjs';
 
 export default function SignUp() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
-    setError("");
-    const reserved = ["besthubs@digisphere.co.za", "obe.dube@digisphere.co.za"];
-    if (reserved.includes(email)) {
-      setError("Email already exists");
-      return;
+    try {
+      const client = await clientPromise;
+      const db = client.db();
+      const existingUser = await db.collection('users').findOne({ email });
+      if (existingUser) {
+        setError('User already exists');
+        return;
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await db.collection('users').insertOne({
+        email,
+        password: hashedPassword,
+        isAdmin: email === 'obe.dube@digisphere.co.za' ? true : false,
+      });
+      router.push('/auth/signin');
+    } catch (err) {
+      setError('Sign-up failed');
     }
-    // Simulate signup (in production, store in DynamoDB)
-    router.push("/auth/signin");
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-[#1a1a1a] text-[#d4af37]">
-      <h1 className="text-2xl mb-4">Sign Up</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 bg-[#2a2a2a] border border-[#d4af37]/20"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block mb-1">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 bg-[#2a2a2a] border border-[#d4af37]/20"
-          />
-        </div>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        <button type="submit" className="w-full p-2 bg-[#d4af37] text-[#1a1a1a]">
-          Sign Up
-        </button>
+    <div>
+      <h1>Sign Up</h1>
+      <form onSubmit={handleSignUp}>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          required
+        />
+        <button type="submit">Sign Up</button>
       </form>
-      <p className="mt-4">
-        Already have an account? <Link href="/auth/signin" className="underline">Sign In</Link>
+      {error && <p>{error}</p>}
+      <p>
+        Already have an account? <a href="/auth/signin">Sign In</a>
       </p>
     </div>
   );
